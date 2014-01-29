@@ -26,12 +26,10 @@
 #define MATRIX_N 5000
 #endif
 
-/* Blocking factor (block size). 
-   NOTES:
-   - Avoid power of 2 (cache sub set corner cases)
-   - MATRIX_N must be a multiple of BLK_FACTOR.
- */
+/* Blocking factor (block size).  */
+#ifndef BLK_FACTOR
 #define BLK_FACTOR 250
+#endif
 
 /* Array data type. */
 #ifndef DATATYPE
@@ -84,11 +82,15 @@ const char* kernel_name = "transposed_blocked";
 void kernel()
 {
   int i,j,ik,jk;
-  for (ik=0; ik<MATRIX_N; ik+=BLK_FACTOR)
-    for (jk=0; jk<MATRIX_N; jk+=BLK_FACTOR)
+  for (ik=0; ik<(MATRIX_N-BLK_FACTOR); ik+=BLK_FACTOR)
+    for (jk=0; jk<(MATRIX_N-BLK_FACTOR); jk+=BLK_FACTOR)
       for (i=ik; i<(ik+BLK_FACTOR); i++)
 	for (j=jk; j<(jk+BLK_FACTOR); j++)
 	  mb[j][i] = ma[i][j];
+
+  for (i=jk; i<MATRIX_N; i++)
+    for (j=jk; j<MATRIX_N; j++)
+      mb[j][i] = ma[i][j];
 }
 
 /* Amount of bytes accessed: 2 (1 read + 1 write) * matrix size * element size (in bytes)  */
@@ -110,10 +112,6 @@ int main()
   printf("# of runs       : %d\n", RPT);
   printf("Matrices size   : %d x %d\n", MATRIX_N, MATRIX_N);
   printf("Blocking factor : %d\n", BLK_FACTOR);
-  if (MATRIX_N % BLK_FACTOR != 0) {
-    printf("WARNING: MATRIX_N (%d) must be a multiple of BLK_FACTOR (%d)\n", 
-	   MATRIX_N, BLK_FACTOR);
-  }
   
   /* Main loop. */
   for (k=0; k<RPT; k++)
