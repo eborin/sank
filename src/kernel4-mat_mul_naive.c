@@ -104,6 +104,7 @@ void kernel()
 
 /* Amount of bytes accessed: (2 (read A, read B) * M*N*K + 1 (write C) * M*N )  * element size (in bytes)  */
 double bytes = (2*(MATRIX_M * MATRIX_N * MATRIX_K) + 1*(MATRIX_M * MATRIX_N))  * sizeof(DATATYPE);
+double fops = (MATRIX_M * MATRIX_N * MATRIX_K) * 2 /* 1 mult + 1 sum */;
 
 /* -----------------------------*/
 int main()
@@ -113,7 +114,8 @@ int main()
   double             mintime = FLT_MAX;
   double             avgtime = 0;
   double             maxtime = 0;
-  double             rate;
+  double             rate, avgrate;
+  double             flrate, flavgrate;
   double             t;
 
   printf("Kernel name     : %s\n",kernel_name);
@@ -133,7 +135,6 @@ int main()
     //printf(" -> %6.2f s\n", times[k]);
   }
 
-
   /* Final report */
   for (k=1; k<RPT; k++) 
   /* Discard first iteration (k=1). */
@@ -144,7 +145,13 @@ int main()
   }
   avgtime = avgtime / (RPT-1);
   rate = (bytes / mintime) / GB;
+  avgrate = (bytes / avgtime) / GB;
+  flrate = (fops / mintime) / MB;
+  flavgrate = (fops / avgtime) / MB;
   printf("Best Rate GB/s  : %6.2f\n",rate);
+  printf("Avg  Rate GB/s  : %6.2f\n",avgrate);
+  printf("Best MFLOPS     : %6.2f\n",flrate);
+  printf("Avg  MFLOPS     : %6.2f\n",flavgrate);
   printf("Avg time        : %6.2f\n",avgtime);
   printf("Min time        : %6.2f\n",mintime);
   printf("Max time        : %6.2f\n",maxtime);
