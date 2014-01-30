@@ -32,7 +32,9 @@
 #endif
 
 /* Number of times each kernel will be executed. */
+#ifndef RPT
 #define RPT 1000
+#endif
 
 /* Useful macros! */
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -90,7 +92,7 @@ void kernel()
 }
 
 /* Amount of bytes accessed: 2 (2 reads) * ARRAY_SZ * element size (in bytes)  */
-double bytes = (3*ARRAY_SZ*sizeof(DATATYPE));
+double bytes = (2*ARRAY_SZ*sizeof(DATATYPE));
 
 /* -----------------------------*/
 int main()

@@ -28,7 +28,7 @@
 
 /* Blocking factor (block size).  */
 #ifndef BLK_FACTOR
-#define BLK_FACTOR 250
+#define BLK_FACTOR 256
 #endif
 
 /* Array data type. */
@@ -88,9 +88,29 @@ void kernel()
 	for (j=jk; j<(jk+BLK_FACTOR); j++)
 	  mb[j][i] = ma[i][j];
 
-  for (i=jk; i<MATRIX_N; i++)
+  for (i=0; i<MATRIX_N; i++)
     for (j=jk; j<MATRIX_N; j++)
       mb[j][i] = ma[i][j];
+
+  for (i=ik; i<MATRIX_N; i++)
+    for (j=0; j<jk; j++)
+      mb[j][i] = ma[i][j];
+}
+
+void check()
+{
+  int i,j;
+  for(i=0; i<MATRIX_N; i++)
+    for(j=0; j<MATRIX_N; j++)
+      ma[i][j] = i*MATRIX_N + j;
+
+  kernel();
+
+  for(i=0; i<MATRIX_N; i++)
+    for(j=0; j<MATRIX_N; j++)
+      if (ma[i][j] != mb[j][i]) {
+	printf("ERROR: ma[%d][%d] != mb[%d][%d]\n", i,j,j,i);
+      }
 }
 
 /* Amount of bytes accessed: 2 (1 read + 1 write) * matrix size * element size (in bytes)  */
@@ -112,6 +132,8 @@ int main()
   printf("# of runs       : %d\n", RPT);
   printf("Matrices size   : %d x %d\n", MATRIX_N, MATRIX_N);
   printf("Blocking factor : %d\n", BLK_FACTOR);
+
+  check();
   
   /* Main loop. */
   for (k=0; k<RPT; k++)
