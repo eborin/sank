@@ -32,7 +32,9 @@
 #endif
 
 /* Number of times each kernel will be executed. */
+#ifndef RPT
 #define RPT 1000
+#endif
 
 /* Useful macros! */
 #define MIN(x,y) ((x)<(y)?(x):(y))
