@@ -23,7 +23,8 @@
 
 /* Matrices dimentions. */
 #ifndef ARRAY_SZ
-#define ARRAY_SZ 500000
+#define ARRAY_SZ ((4*1024*1024) / (3*sizeof(DATATYPE)))
+//#define ARRAY_SZ 340000
 #endif
 
 /* Array data type. */
@@ -32,7 +33,7 @@
 #endif
 
 /* Number of times each kernel will be executed. */
-#define RPT 1000
+#define RPT 500
 
 /* Useful macros! */
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -70,52 +71,36 @@ double mysecond()
 /* Matrices. */
 DATATYPE ma[ARRAY_SZ];
 DATATYPE mb[ARRAY_SZ];
+DATATYPE mc[ARRAY_SZ];
 DATATYPE result;
 
 /* Kernel name. */
-const char* kernel_name = "inner_prod_vec";
+const char* kernel_name = "array_sum";
 
-DATATYPE inner_prod(DATATYPE* a, DATATYPE* b) 
+DATATYPE sum(DATATYPE a, DATATYPE b)
 {
-  int i; 
-  DATATYPE total = 0.0;
-  for (i=0; i<ARRAY_SZ; i++)
-    total += a[i] * b[i];
-  return total;
+  return a+b;
 }
 
-#if DATATYPE == float
-#include <x86intrin.h>
-DATATYPE inner_prod_vec(DATATYPE* a, DATATYPE* b) 
-{  
+void array_sum_naive(DATATYPE* a, DATATYPE* b, DATATYPE* c) 
+{
+  DATATYPE ta, tb, tc;
   int i;
-  float total;
-  __m128 v1, v2, v3, acc;
-  acc = _mm_setzero_ps();  // acc = |0|0|0|0|
-  for (i=0; i<(ARRAY_SZ-4); i+=4){
-    v1  = _mm_loadu_ps(a+i);
-    v2  = _mm_loadu_ps(b+i);
-    v3  = _mm_mul_ps(v1, v2);
-    acc = _mm_add_ps(acc, v3);
+  for (i=0; i<ARRAY_SZ; i++) {
+    ta = a[i];
+    tb = b[i];
+    tc = sum(ta,tb);
+    c[i] = tc;
   }
-  acc = _mm_hadd_ps(acc,acc);
-  acc = _mm_hadd_ps(acc,acc);
-  _mm_store_ss(&total,acc);
-  for (; i<ARRAY_SZ; i++)
-    total += a[i] * b[i];
-  return total;
 }
-#else
-#error "inner_prod_vec only works for DATATYPE == float"
-#endif
 
 void kernel()
 {
-  result = inner_prod_vec(ma, mb);
+  array_sum_naive(ma, mb, mc);
 }
 
-/* Amount of bytes accessed: 2 (2 reads) * ARRAY_SZ * element size (in bytes)  */
-double bytes = (2*ARRAY_SZ*sizeof(DATATYPE));
+/* Amount of bytes accessed: 3 (2 reads + 1 write) * ARRAY_SZ * element size (in bytes)  */
+double bytes = (3*ARRAY_SZ*sizeof(DATATYPE));
 
 /* -----------------------------*/
 int main()
@@ -132,7 +117,7 @@ int main()
   printf("Kernel name     : %s\n",kernel_name);
   printf("Array datatype  : %s\n", XSTR(DATATYPE));
   printf("# of runs       : %d\n", RPT);
-  printf("Arrays size     : %i\n", ARRAY_SZ);
+  printf("Arrays size     : %d\n", (unsigned) ARRAY_SZ);
 
   /* Initialize arrays. */
   for (i=0; i<ARRAY_SZ; i++)
